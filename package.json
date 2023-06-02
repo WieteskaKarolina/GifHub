@@ -10,6 +10,9 @@
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
-    "mysql": "^2.18.1"
+    "mysql": "^2.18.1",
+    "pg-promise": "^11.5.0",
+    "pgp": "^0.1.0",
+    "postgres": "^3.3.5"
   }
 }
