@@ -10,3 +10,12 @@ services:
       - 32768:5432
     volumes:
       - ./data:/var/lib/postgresql/data
+
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - 8080:80
+    depends_on:
+      - db
