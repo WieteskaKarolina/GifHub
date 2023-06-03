@@ -1,23 +1,27 @@
-const express = require('express')
-const app = express()
-const port = 3000
+const express = require('express');
+const app = express();
+const port = 3000;
 const pgp = require('pg-promise')();
 const db = require('./db');
 const fetch = require('isomorphic-fetch');
+const path = require('path');
 
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+app.use(express.static('public'));
 
 db.connect()
   .then((obj) => {
     console.log('Connection to the database successful!');
-    obj.done(); 
+    obj.done();
   })
   .catch((error) => {
     console.error('Error connecting to the database:', error);
   })
   .finally(() => {
-    pgp.end(); 
-});
-
+    pgp.end();
+  });
 
 app.get('/', (req, res) => {
   fetch('https://api.giphy.com/v1/gifs/search?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&q=tiger&limit=25&offset=0&rating=g&lang=en')
@@ -29,9 +33,7 @@ app.get('/', (req, res) => {
         imageUrls.push(gif.images.fixed_height.url);
       });
 
-      const html = imageUrls.map(url => `<img src="${url}" />`).join('');
-
-      res.send(html);
+      res.render('index', { imageUrls });
     })
     .catch(error => {
       console.log('Error:', error);
@@ -39,7 +41,6 @@ app.get('/', (req, res) => {
     });
 });
 
-
 app.listen(port, () => {
-  console.log(`Example app listening on port ${port}`)
-})
+  console.log(`Example app listening on port ${port}`);
+});
