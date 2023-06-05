@@ -5,11 +5,15 @@ const pgp = require('pg-promise')();
 const db = require('./db');
 const fetch = require('isomorphic-fetch');
 const path = require('path');
+const loginOrRegisterRoute = require(__dirname + '/routes/loginOrRegister');
 
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use('/loginOrRegister', loginOrRegisterRoute);
+
 
 db.connect()
   .then((obj) => {

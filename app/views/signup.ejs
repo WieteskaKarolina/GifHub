@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Login or Register</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="icon" href="gif.png" type="image/png">
+
+  <style>
+    body {
+        background: linear-gradient(to bottom, #ffffff, #ec76cd, #000000);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+    }
+
+    .login-container {
+      max-width: 500px;
+      margin: 0 auto;
+      padding: 30px;
+      background-color: #eee9e9;
+      border-radius: 5px;
+      box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+      margin-top: 50px;
+    }
+
+    .login-logo {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .login-logo img {
+      width: 150px;
+    }
+
+    .login-form input[type="text"],
+    .login-form input[type="password"],
+    .login-form input[type="email"] {
+      border: none;
+      border-bottom: 1px solid #D8D8D8;
+      padding: 10px 0;
+      background-color: transparent;
+      outline: none;
+      width: 100%;
+    }
+
+    .login-form input[type="text"]:focus,
+    .login-form input[type="password"]:focus,
+    .login-form input[type="email"]:focus {
+      border-bottom-color: #555;
+    }
+
+    .login-form .form-label {
+      color: #555;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+
+    .login-form .btn-login,
+    .login-form .btn-signup {
+      background-color: #FF3366;
+      border: none;
+      color: #FFF;
+      padding: 10px 30px;
+      border-radius: 25px;
+      font-weight: bold;
+      margin-top: 30px;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .login-form .btn-login:hover,
+    .login-form .btn-signup:hover {
+      background-color: #CC0033;
+    }
+
+    .login-form .form-link {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    .login-form .form-link a {
+      color: #FF3366;
+    }
+
+    .login-form .form-separator {
+      text-align: center;
+      margin: 50px 0;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark fixed-top" style="background-color: rgb(12, 12, 12);">
+    <div class="container">
+      <a class="navbar-brand" href="/">GIFHUB</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link" href="/loginOrRegister">Login/Register</a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
+    <div class="login-container">
+      <form class="login-form" id="register-form">
+        <h2 class="text-center">Sign Up</h2>
+        <div class="mb-3">
+          <label for="register-email" class="form-label">Email:</label>
+          <input type="email" id="register-email" name="email" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="register-password" class="form-label">Password:</label>
+          <input type="password" id="register-password" name="password" class="form-control" required>
+        </div>
+        <div class="mb-3">
+          <label for="register-confirm-password" class="form-label">Confirm Password:</label>
+          <input type="password" id="register-confirm-password" name="confirmPassword" class="form-control" required>
+        </div>
+        <div class="text-center">
+          <button type="submit" class="btn btn-signup">Sign Up</button>
+        </div>
+        <div class="form-link">
+          Already have an account? <a href="/loginOrRegister">Login</a>
+        </div>
+      </form>
+    
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

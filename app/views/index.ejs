@@ -1,44 +1,98 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>GIF Search</title>
+  <title>GIfHub</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="icon" href="gif.png" type="image/png">
+
   <style>
-    .navbar {
-      background-color: #f8f9fa;
+    body {
+      background: linear-gradient(to bottom, #ffffff, #ec76cd, #000000);
+      margin: 0;
+      padding: 0;
     }
+    .search-form {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .search-container {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 20px;
+    }
+    .search-input {
+      margin-right: 5px;
+      width: 25%;
+      max-width: 300px;
+    }
+    .search-button {
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      height: 38px;
+      margin-left: 10px;
+    }
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      grid-gap: 25px;
+    }
+
+    .image-item {
+      display: flex;
+      justify-content: center;
+    }
+
+    .image-item img {
+      max-width: 100%;
+      height: auto;
+    }
+
   </style>
 </head>
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light">
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgb(12, 12, 12);">
     <div class="container">
-      <a class="navbar-brand" href="#">GIF Search</a>
+      <a class="navbar-brand" href="#">GIFHUB</a>
       <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
       <div class="collapse navbar-collapse" id="navbarNav">
         <ul class="navbar-nav ml-auto">
+        </ul>
+      </div>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav"> <!-- Modified line -->
+        <ul class="navbar-nav">
           <li class="nav-item">
-            <form class="form-inline my-2 my-lg-0" action="/" method="GET">
-              <input class="form-control mr-sm-2" type="text" name="query" placeholder="Search GIFs" required>
-              <button class="btn btn-primary my-2 my-sm-0" type="submit">Search</button>
-            </form>
+            <a class="nav-link" href="/loginOrRegister">Login/Register</a>
           </li>
         </ul>
       </div>
     </div>
   </nav>
 
-  <div class="container mt-4">
-    <div class="row">
+  <div class="container">
+    <div class="search-container">
+      <div class="search-form">
+        <form class="form-inline" action="/" method="GET">
+          <input class="form-control search-input" type="text" name="query" placeholder="Search GIFs" required>
+          <button class="search-button" type="submit">
+            <img src="search.png" alt="Search">
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div class="image-grid">
       <% imageUrls.forEach(function(url) { %>
-        <div class="col-md-3 mt-3">
-          <img src="<%= url %>" class="img-fluid">
+        <div class="image-item">
+          <img src="<%= url %>">
         </div>
       <% }) %>
     </div>
-  </div>
-
+    
+      <br></br>
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@1.16.1/dist/umd/popper.min.js"></script>
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
