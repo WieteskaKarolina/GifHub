@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Login or Register</title>
+  <title>Login</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.1/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="icon" href="gif.png" type="image/png">
@@ -111,7 +111,7 @@
 
   <div class="container">
     <div class="login-container">
-      <form class="login-form" id="login-form">
+      <form class="login-form" id="login-form" method="POST" action="/loginOrRegister">
         <h2 class="text-center">Login</h2>
         <div class="mb-3">
           <label for="login-email" class="form-label">Email:</label>
@@ -128,7 +128,6 @@
           Don't have an account? <a href="/signUp">Sign up</a>
         </div>
       </form>
-    
     </div>
   </div>
 

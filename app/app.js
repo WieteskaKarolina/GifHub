@@ -1,4 +1,5 @@
 const express = require('express');
+const session = require('express-session');
 const app = express();
 const port = 3000;
 const pgp = require('pg-promise')();
@@ -8,6 +9,7 @@ const path = require('path');
 const loginOrRegisterRoute = require(__dirname + '/routes/loginOrRegister');
 const signUpRoute = require(__dirname + '/routes/signUp');
 const bodyParser = require('body-parser');
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
@@ -15,22 +17,34 @@ app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.use(session({
+  secret: 'my_secret_key',
+  resave: false,
+  saveUninitialized: false
+}));
+
 app.use('/loginOrRegister', loginOrRegisterRoute);
 app.use('/signUp', signUpRoute);
 
-db.connect()
-  .then((obj) => {
-    console.log('Connection to the database successful!');
-    obj.done();
-  })
-  .catch((error) => {
-    console.error('Error connecting to the database:', error);
-  })
-  .finally(() => {
-    pgp.end();
-  });
 
-  app.get('/', (req, res) => {
+app.use(session({
+  secret: 'my_secret_key',
+  resave: false,
+  saveUninitialized: false
+}));
+
+const checkAuthentication = (req, res, next) => {
+  if (req.session && req.session.user) {
+    next();
+  } else {
+    // Redirect or render login page
+    res.redirect('/loginOrRegister');
+  }
+};
+
+
+
+app.get('/', checkAuthentication, (req, res) => {
     const page = req.query.page || 1;
     const limit = req.query.limit || 25;
     const offset = (page - 1) * limit;
@@ -44,7 +58,7 @@ db.connect()
           imageUrls.push(gif.images.fixed_height.url);
         });
   
-        res.render('index', { imageUrls });
+        res.render('index', { imageUrls , user: req.session.user});
       })
       .catch(error => {
         console.log('Error:', error);
