@@ -6,14 +6,17 @@ const db = require('./db');
 const fetch = require('isomorphic-fetch');
 const path = require('path');
 const loginOrRegisterRoute = require(__dirname + '/routes/loginOrRegister');
-
+const signUpRoute = require(__dirname + '/routes/signUp');
+const bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/loginOrRegister', loginOrRegisterRoute);
-
+app.use('/signUp', signUpRoute);
 
 db.connect()
   .then((obj) => {
@@ -27,22 +30,35 @@ db.connect()
     pgp.end();
   });
 
-app.get('/', (req, res) => {
-  fetch('https://api.giphy.com/v1/gifs/search?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&q=tiger&limit=25&offset=0&rating=g&lang=en')
-    .then(response => response.json())
-    .then(data => {
-      const imageUrls = [];
-
-      data.data.forEach(gif => {
-        imageUrls.push(gif.images.fixed_height.url);
+  app.get('/', (req, res) => {
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 25;
+    const offset = (page - 1) * limit;
+  
+    fetch(`https://api.giphy.com/v1/gifs/search?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&q=tiger&limit=${limit}&offset=${offset}&rating=g&lang=en`)
+      .then(response => response.json())
+      .then(data => {
+        const imageUrls = [];
+  
+        data.data.forEach(gif => {
+          imageUrls.push(gif.images.fixed_height.url);
+        });
+  
+        res.render('index', { imageUrls });
+      })
+      .catch(error => {
+        console.log('Error:', error);
+        res.status(500).send('Internal Server Error');
       });
+  });
+  
 
-      res.render('index', { imageUrls });
-    })
-    .catch(error => {
-      console.log('Error:', error);
-      res.status(500).send('Internal Server Error');
-    });
+app.post('/favorite', (req, res) => {
+  const gifUrl = req.body.gifUrl;
+
+  // Dodaj kod obsługujący dodanie gif-a do ulubionych w bazie danych
+
+  res.json({ message: 'Gif dodany do ulubionych' });
 });
 
 app.listen(port, () => {

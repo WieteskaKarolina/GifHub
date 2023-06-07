@@ -2,13 +2,15 @@
 FROM python:3.9
 
 # Utwórz katalog roboczy w kontenerze
-WORKDIR /app
+WORKDIR /ai
 
 # Skopiuj plik requirements.txt do katalogu roboczego
 COPY requirements.txt .
 
 # Zainstaluj zależności
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install flask
+
 
 # Skopiuj kod aplikacji
 COPY app.py .

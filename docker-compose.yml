@@ -7,29 +7,29 @@ services:
       - POSTGRES_PASSWORD=postgrespw
       - POSTGRES_DB=mydatabase
     ports:
-      - 32768:5432
+      - 5432:5432
     volumes:
       - ./data:/var/lib/postgresql/data
 
-  app:
-    build:
-      context: ./app
-      dockerfile: Dockerfile
-    ports:
-      - 3000:3000
-    depends_on:
-      - db
-    networks:
-      - mynetwork
+#   app:
+#     build:
+#       context: ./app
+#       dockerfile: Dockerfile
+#     ports:
+#       - 3000:3000
+#     depends_on:
+#       - db
+#     networks:
+#       - mynetwork
 
-  ai:
-    build:
-      context: ./ai
-      dockerfile: Dockerfile
-    depends_on:
-      - db
-    networks:
-      - mynetwork
+#   ai:
+#     build:
+#       context: ./ai
+#       dockerfile: Dockerfile
+#     depends_on:
+#       - db
+#     networks:
+#       - mynetwork
 
-networks:
-  mynetwork:
+# networks:
+#   mynetwork:
