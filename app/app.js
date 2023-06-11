@@ -8,6 +8,7 @@ const fetch = require('isomorphic-fetch');
 const path = require('path');
 const loginOrRegisterRoute = require(__dirname + '/routes/loginOrRegister');
 const signUpRoute = require(__dirname + '/routes/signUp');
+const routerLogout = require('./routers/logout');
 const bodyParser = require('body-parser');
 
 app.use(bodyParser.json());
@@ -25,6 +26,7 @@ app.use(session({
 
 app.use('/loginOrRegister', loginOrRegisterRoute);
 app.use('/signUp', signUpRoute);
+app.use('/logout', routerLogout);
 
 
 app.use(session({
