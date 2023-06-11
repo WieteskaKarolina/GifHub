@@ -69,13 +69,31 @@ app.get('/', checkAuthentication, (req, res) => {
   });
   
 
-app.post('/favorite', (req, res) => {
-  const gifUrl = req.body.gifUrl;
-
-  // Dodaj kod obsługujący dodanie gif-a do ulubionych w bazie danych
-
-  res.json({ message: 'Gif dodany do ulubionych' });
-});
+  app.post('/favorite', (req, res) => {
+    const gifUrl = req.body.gifUrl;
+    const userId = req.session.user.user_id;
+  
+    db.task(async (t) => {
+      try {
+        const gifId = await t.one(
+          'INSERT INTO gifs (gif_url, user_id) VALUES ($1, $2) RETURNING gif_id',
+          [gifUrl, userId]
+        );
+  
+        await t.none(
+          'INSERT INTO favorites (user_id, gif_id) VALUES ($1, $2)',
+          [userId, gifId]
+        );
+  
+        console.log('GIF added to favorites:', gifUrl);
+        res.json({ message: 'GIF added to favorites.' });
+      } catch (err) {
+        console.error('Error adding GIF to favorites:', err);
+        res.status(500).json({ error: 'An error occurred while adding the GIF to favorites.' });
+      }
+    });
+  });
+  
 
 
 app.get('/user', checkAuthentication, (req, res) => {
