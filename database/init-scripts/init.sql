@@ -20,8 +20,8 @@ CREATE TABLE favorites (
   favorite_id SERIAL PRIMARY KEY,
   user_id INT,
   gif_id INT,
-  FOREIGN KEY (user_id) REFERENCES users (user_id),
-  FOREIGN KEY (gif_id) REFERENCES gifs (gif_id)
+  FOREIGN KEY (user_id) REFERENCES users (user_id) ON DELETE CASCADE,
+  FOREIGN KEY (gif_id) REFERENCES gifs (gif_id) ON DELETE CASCADE
 );
 
 -- Table: tags
@@ -34,6 +34,6 @@ CREATE TABLE tags (
 CREATE TABLE gif_tags (
   gif_id INT,
   tag_id INT,
-  FOREIGN KEY (gif_id) REFERENCES gifs (gif_id),
-  FOREIGN KEY (tag_id) REFERENCES tags (tag_id)
+  FOREIGN KEY (gif_id) REFERENCES gifs (gif_id) ON DELETE CASCADE,
+  FOREIGN KEY (tag_id) REFERENCES tags (tag_id) ON DELETE CASCADE
 );

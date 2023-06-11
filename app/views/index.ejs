@@ -128,20 +128,24 @@
         </form>
       </div>
     </div>
-
     <div class="container">
       <div class="row">
         <% imageUrls.forEach(function(url, index) { %>
           <div class="image-container">
             <img class="image" src="<%= url %>">
-            <button class="favorite-button">
-              <img src="heart (4).png" alt="Polub">
-            </button>
+            <% if (favoritedGifs.find(gif => gif.gif_url === url)) { %>
+              <button class="favorite-button">
+                <img src="heart7.png" alt="Dislike">
+              </button>
+            <% } else { %>
+              <button class="favorite-button">
+                <img src="heart (4).png" alt="Like">
+              </button>
+            <% } %>
           </div>
         <% }) %>
       </div>
     </div>
-    
     
     <nav aria-label="Page navigation">
       <ul class="pagination justify-content-center">
@@ -171,6 +175,7 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
   <script>
+
 // document.addEventListener('DOMContentLoaded', function() {
 //   var favoriteButtons = document.querySelectorAll('.favorite-button');
 //   favoriteButtons.forEach(function(button) {
@@ -179,19 +184,30 @@
 //       var image = imageContainer.querySelector('.image');
 //       if (image) {
 //         var imageUrl = image.src;
-//         var heartImage = event.target.querySelector('img');
-//         if (heartImage) {
-//           heartImage.src = 'heart7.png';
-//         }
+//         event.target.src = 'heart7.png';
 //         addToFavorites(imageUrl);
 //       }
 //     });
 //   });
 
 //   function addToFavorites(imageUrl) {
+//     fetch('/favorite', {
+//       method: 'POST',
+//       headers: {
+//         'Content-Type': 'application/json'
+//       },
+//       body: JSON.stringify({ gifUrl: imageUrl })
+//     })
+//       .then(response => response.json())
+//       .then(data => console.log(data.message))
+//       .catch(error => console.error('Error adding GIF to favorites:', error));
+//   }
+
+//   function deleteFromFavorites(imageUrl) {
 //     console.log('Added to favorites:', imageUrl);
 //   }
 // });
+
 
 document.addEventListener('DOMContentLoaded', function() {
   var favoriteButtons = document.querySelectorAll('.favorite-button');
@@ -201,25 +217,44 @@ document.addEventListener('DOMContentLoaded', function() {
       var image = imageContainer.querySelector('.image');
       if (image) {
         var imageUrl = image.src;
-        event.target.src = 'heart7.png';
-        addToFavorites(imageUrl);
+        var isHeart7 = event.target.src.includes('heart7.png');
+        if (isHeart7) {
+          event.target.src = 'heart (4).png';
+          deleteFromFavorites(imageUrl);
+        } else {
+          event.target.src = 'heart7.png';
+          addToFavorites(imageUrl);
+        }
       }
     });
   });
 
   function addToFavorites(imageUrl) {
-    console.log('Added to favorites:', imageUrl);
+    fetch('/favorite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ gifUrl: imageUrl })
+    })
+      .then(response => response.json())
+      .then(data => console.log(data.message))
+      .catch(error => console.error('Error adding GIF to favorites:', error));
   }
 
   function deleteFromFavorites(imageUrl) {
-    console.log('Added to favorites:', imageUrl);
+    fetch('/unfavorite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ gifUrl: imageUrl })
+    })
+      .then(response => response.json())
+      .then(data => console.log(data.message))
+      .catch(error => console.error('Error removing GIF from favorites:', error));
   }
 });
-
-
-
-
-
 
 
   </script>
