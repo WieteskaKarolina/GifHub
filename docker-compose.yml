@@ -10,25 +10,25 @@ services:
       - ./database/init-scripts:/docker-entrypoint-initdb.d
    
 
-#   app:
-#     build:
-#       context: ./app
-#       dockerfile: Dockerfile
-#     ports:
-#       - 3000:3000
-#     depends_on:
-#       - db
-#     networks:
-#       - mynetwork
+  app:
+    build:
+      context: ./app
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
+    networks:
+      - mynetwork
 
-#   ai:
-#     build:
-#       context: ./ai
-#       dockerfile: Dockerfile
-#     depends_on:
-#       - db
-#     networks:
-#       - mynetwork
+  ai:
+    build:
+      context: ./ai
+      dockerfile: Dockerfile
+    depends_on:
+      - db
+    networks:
+      - mynetwork
 
-# networks:
-#   mynetwork:
+networks:
+  mynetwork:

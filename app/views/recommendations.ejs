@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GIF Recommendations</title>
+</head>
+<body>
+  <h1>GIF Recommendations</h1>
+
+  <% if (recommendations.length > 0) { %>
+    <h2>Recommended GIFs:</h2>
+    <ul>
+      <% recommendations.forEach(function(gif) { %>
+        <li><%= gif.title %></li>
+      <% }); %>
+    </ul>
+  <% } else { %>
+    <p>No recommendations found.</p>
+  <% } %>
+</body>
+</html>

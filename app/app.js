@@ -151,59 +151,97 @@ app.get('/next', (req, res) => {
 
 
 
-app.post('/favorite', (req, res) => {
+app.post('/favorite', async (req, res) => {
   const gifUrl = req.body.gifUrl;
   const userId = req.session.user.user_id;
 
-  db.task(async (t) => {
-    try {
-      const gif = await t.one(
-        'INSERT INTO gifs (gif_url, user_id) VALUES ($1, $2) RETURNING gif_id',
-        [gifUrl, userId]
-      );
+  try {
+    const gif = await db.one(
+      'INSERT INTO gifs (gif_url, user_id) VALUES ($1, $2) RETURNING gif_id',
+      [gifUrl, userId]
+    );
 
-      const gifId = gif.gif_id;
+    const gifId = gif.gif_id;
 
-      await t.none(
-        'INSERT INTO favorites (user_id, gif_id) VALUES ($1, $2)',
-        [userId, gifId]
-      );
+    await db.none(
+      'INSERT INTO favorites (user_id, gif_id) VALUES ($1, $2)',
+      [userId, gifId]
+    );
 
-      console.log('GIF added to favorites:', gifUrl);
-      res.json({ message: 'GIF added to favorites.' });
-    } catch (err) {
-      console.error('Error adding GIF to favorites:', err);
-      res.status(500).json({ error: 'An error occurred while adding the GIF to favorites.' });
+    console.log('GIF added to favorites:', gifUrl);
+
+    const gifResponse = await fetch(`https://api.giphy.com/v1/gifs/translate?api_key=LTseqPTtX3lsCg7ZBGXDISq76fMIGVHJ&s=${gifUrl}`);
+    const gifData = await gifResponse.json();
+    const title = gifData.data.title;
+    const tags = title.split(' ');
+
+    for (const tag of tags) {
+      const existingTag = await db.oneOrNone('SELECT tag_id FROM tags WHERE tag_name = $1', tag);
+
+      if (existingTag) {
+        await db.none('INSERT INTO gif_tags (gif_id, tag_id) VALUES ($1, $2)', [gifId, existingTag.tag_id]);
+      } else {
+        const newTag = await db.one('INSERT INTO tags (tag_name) VALUES ($1) RETURNING tag_id', tag);
+        await db.none('INSERT INTO gif_tags (gif_id, tag_id) VALUES ($1, $2)', [gifId, newTag.tag_id]);
+      }
     }
-  });
+
+    res.json({ message: 'GIF added to favorites.' });
+  } catch (error) {
+    console.error('Error adding GIF to favorites:', error);
+    res.status(500).json({ error: 'An error occurred while adding the GIF to favorites.' });
+  }
 });
 
-  app.post('/unfavorite', (req, res) => {
-    const gifUrl = req.body.gifUrl;
-    const userId = req.session.user.user_id;
-  
-    db.task(async (t) => {
-      try {
-        const gif = await t.oneOrNone(
-          'SELECT gif_id FROM gifs WHERE user_id = $1 AND gif_url = $2',
-          [userId, gifUrl]
-        );
-  
-        if (gif) {
-          await t.none('DELETE FROM gifs WHERE gif_id = $1', gif.gif_id);
-  
-          console.log('GIF removed from favorites:', gifUrl);
-          res.json({ message: 'GIF removed from favorites.' });
-        } else {
-          console.log('GIF not found in favorites:', gifUrl);
-          res.status(404).json({ error: 'GIF not found in favorites.' });
-        }
-      } catch (err) {
-        console.error('Error removing GIF from favorites:', err);
-        res.status(500).json({ error: 'An error occurred while removing the GIF from favorites.' });
-      }
+
+app.get('/recommendations', async (req, res) => {
+  const tags = req.query.tags;
+
+  try {
+    // Wyślij zapytanie do serwera Pythona
+    const response = await axios.get(`${pythonServerURL}/recommendations`, {
+      params: { tags },
     });
-  });
+
+    const recommendations = response.data.recommendations;
+    
+    // Renderuj stronę z rekomendacjami GIF-ów
+    res.render('recommendations', { recommendations: recommendations });
+  } catch (error) {
+    console.error('Błąd podczas pobierania rekomendacji GIF-ów:', error);
+    res.status(500).send('Wystąpił błąd podczas pobierania rekomendacji GIF-ów.');
+  }
+});
+
+app.listen(3000, () => {
+  console.log('Serwer Node.js nasłuchuje na porcie 3000...');
+});
+
+app.post('/unfavorite', async (req, res) => {
+  const gifUrl = req.body.gifUrl;
+  const userId = req.session.user.user_id;
+
+  try {
+    const gif = await db.oneOrNone(
+      'SELECT gif_id FROM gifs WHERE user_id = $1 AND gif_url = $2',
+      [userId, gifUrl]
+    );
+
+    if (gif) {
+      await db.none('DELETE FROM favorites WHERE gif_id = $1', gif.gif_id);
+      await db.none('DELETE FROM gif_tags WHERE gif_id = $1', gif.gif_id);
+      
+      console.log('GIF removed from favorites:', gifUrl);
+      res.json({ message: 'GIF removed from favorites.' });
+    } else {
+      console.log('GIF not found in favorites:', gifUrl);
+      res.status(404).json({ error: 'GIF not found in favorites.' });
+    }
+  } catch (error) {
+    console.error('Error removing GIF from favorites:', error);
+    res.status(500).json({ error: 'An error occurred while removing the GIF from favorites.' });
+  }
+});
   
 
 
