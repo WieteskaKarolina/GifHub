@@ -1,19 +1,22 @@
 version: '3'
 services:
   db:
-    build:
-      context: ./database
-      dockerfile: Dockerfile
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespw
+      POSTGRES_DB: mydatabase
     ports:
       - 5432:5432
     volumes:
       - ./database/init-scripts:/docker-entrypoint-initdb.d
-   
+    networks:
+      - mynetwork
 
   app:
     build:
       context: ./app
-      dockerfile: Dockerfile
     ports:
       - 3000:3000
     depends_on:
@@ -24,7 +27,6 @@ services:
   ai:
     build:
       context: ./ai
-      dockerfile: Dockerfile
     depends_on:
       - db
     networks:

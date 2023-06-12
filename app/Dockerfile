@@ -14,8 +14,5 @@ RUN npm i isomorphic-fetch
 # Skopiuj resztę plików aplikacji
 COPY . .
 
-# Wystaw port, na którym działa serwer
-EXPOSE 3000
-
 # Uruchom serwer
 CMD [ "node", "app.js" ]
