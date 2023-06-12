@@ -44,7 +44,7 @@ const checkAuthentication = (req, res, next) => {
   }
 };
 
-const imageUrls = []; // Moved to shared scope
+let imageUrls = []; // Moved to shared scope
 
 app.get('/', checkAuthentication, async (req, res) => {
   const page = req.query.page || 1;
@@ -54,7 +54,7 @@ app.get('/', checkAuthentication, async (req, res) => {
   try {
     const response = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&limit=${limit}&offset=${offset}&rating=g&lang=en`);
     const data = await response.json();
-
+    imageUrls = []
     data.data.forEach(gif => {
       imageUrls.push(gif.images.fixed_height.url);
     });
@@ -68,6 +68,29 @@ app.get('/', checkAuthentication, async (req, res) => {
     res.status(500).send('Internal Server Error');
   }
 });
+
+app.get('/search', checkAuthentication, async (req, res) => {
+  const query = req.query.q;
+  const page = req.query.page || 1;
+  const limit = req.query.limit || 36;
+  const offset = (page - 1) * limit;
+
+  try {
+    const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&q=${query}&limit=${limit}&offset=${offset}&rating=g&lang=en`);
+    const data = await response.json();
+    imageUrls = []
+    imageUrls = data.data.map(gif => gif.images.fixed_height.url);
+
+    const userId = req.session.user.user_id;
+    const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
+
+    res.render('index', { imageUrls, favoritedGifs, user: req.session.user });
+  } catch (error) {
+    console.log('Error:', error);
+    res.status(500).send('Internal Server Error');
+  }
+});
+
 
 app.get('/gif', async (req, res) => {
   const gifUrl = req.query.url;
@@ -110,7 +133,7 @@ app.get('/prev', (req, res) => {
 });
 
 app.get('/next', (req, res) => {
-  const gifUrl = decodeURIComponent(req.query.url); // Decode the URL
+  const gifUrl = decodeURIComponent(req.query.url);  
   console.log("url:", gifUrl)
   console.log(imageUrls)
   const currentIndex = imageUrls.findIndex(url => url === gifUrl);
@@ -184,37 +207,25 @@ app.post('/favorite', (req, res) => {
   
 
 
-app.get('/user', checkAuthentication, (req, res) => {
-  const userId = req.session.user.user_id;
-
-  // db.any('SELECT favorites.favorite_id, gifs.gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', [userId])
-  //   .then(favorites => {
-  //     res.render('user', { favorites, username: req.session.user.username });
-  //   })
-  //   .catch(error => {
-  //     console.log('Error:', error);
-  //     res.status(500).send('Internal Server Error');
-  //   });
-
-  const limit = 12;
-  const offset = 0;
-
-  fetch(`https://api.giphy.com/v1/gifs/trending?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&limit=${limit}&offset=${offset}&rating=g&lang=en`)
-    .then(response => response.json())
-    .then(data => {
-      const imageUrls = [];
-
-      data.data.forEach(gif => {
-        imageUrls.push(gif.images.fixed_height.url);
-      });
-      res.render('user', { imageUrls , username: req.session.user.username});
-    })
-    .catch(error => {
+  app.get('/user', checkAuthentication, async (req, res) => {
+    const userId = req.session.user.user_id;
+  
+    try {
+      const favorites = await db.any(
+        'SELECT favorites.favorite_id, gifs.gif_url ' +
+        'FROM favorites ' +
+        'INNER JOIN gifs ON favorites.gif_id = gifs.gif_id ' +
+        'WHERE favorites.user_id = $1',
+        userId
+      );
+  
+      res.render('user', { favorites, username: req.session.user.username });
+    } catch (error) {
       console.log('Error:', error);
       res.status(500).send('Internal Server Error');
-    });
-
-});
+    }
+  });
+  
 
 
 

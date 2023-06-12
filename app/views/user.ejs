@@ -18,7 +18,6 @@
       padding-left: 15px;
       padding-right: 15px;
       padding-top: 20px;
-      padding-bottom: 20px;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -62,6 +61,13 @@
     }
 
 
+    .favorite-button {
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      padding: 10px;
+    }
   </style>
   
 </head>
@@ -101,16 +107,19 @@
   </div>
   
 
-    <div class="container">
-      <div class="row">
-        <% imageUrls.forEach(function(url, index) { %>
-          <div class="image-container">
-            <img class="image" src="<%= url %>">
-
-          </div>
-        <% }) %>
-      </div>
+  <div class="container">
+    <div class="row">
+      <% favorites.forEach(function(favorite) { %>
+        <div class="image-container">
+          <img class="image" src="<%= favorite.gif_url %>">
+          <button class="favorite-button">
+            <img src="heart (4).png" alt="Like">
+          </button>
+        </div>
+      <% }) %>
     </div>
+  </div>
+  
     
 
     
@@ -121,15 +130,54 @@
   <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
   <script>
-    // Obsługa zdarzenia kliknięcia przycisku "Polub"
-    var favoriteButtons = document.querySelectorAll('.favorite-button');
-    favoriteButtons.forEach(function(button) {
-      button.addEventListener('click', function(event) {
-        var imageUrl = event.target.parentNode.previousElementSibling.src;
-        // Wykonaj żądanie API lub dodaj logikę dla polubienia obrazka
-        console.log('Polubiono obrazek:', imageUrl);
-      });
+    
+document.addEventListener('DOMContentLoaded', function() {
+  var favoriteButtons = document.querySelectorAll('.favorite-button');
+  favoriteButtons.forEach(function(button) {
+    button.addEventListener('click', function(event) {
+      var imageContainer = event.target.closest('.image-container');
+      var image = imageContainer.querySelector('.image');
+      if (image) {
+        var imageUrl = image.src;
+        var isHeart7 = event.target.src.includes('heart7.png');
+        if (isHeart7) {
+          event.target.src = 'heart (4).png';
+          deleteFromFavorites(imageUrl);
+        } else {
+          event.target.src = 'heart7.png';
+          addToFavorites(imageUrl);
+        }
+      }
     });
+  });
+
+  function addToFavorites(imageUrl) {
+    fetch('/favorite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ gifUrl: imageUrl })
+    })
+      .then(response => response.json())
+      .then(data => console.log(data.message))
+      .catch(error => console.error('Error adding GIF to favorites:', error));
+  }
+
+  function deleteFromFavorites(imageUrl) {
+    fetch('/unfavorite', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ gifUrl: imageUrl })
+    })
+      .then(response => response.json())
+      .then(data => console.log(data.message))
+      .catch(error => console.error('Error removing GIF from favorites:', error));
+  }
+});
+
 
   </script>
 
