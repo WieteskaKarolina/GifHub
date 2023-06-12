@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>GIfHub</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="icon" href="heart (4).png" type="image/png">
+
+  <style>
+    body {
+        background: linear-gradient(to bottom, #f3f2f2, #ec76cd, #000000);
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        }
+
+        .navbar {
+        margin-bottom: 20px;
+        width: 100%;
+        }
+
+        .image-container {
+        margin-bottom: 5px;
+        background-color: rgb(14, 13, 13);
+        padding-left: 15px;
+        padding-right: 15px;
+        padding-top: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        }
+
+        .image {
+        width: 100%;
+        height: 250px; /* Adjust the height as desired */
+        object-fit: cover;
+        }
+
+        .favorite-button {
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      padding: 10px;
+    }
+
+
+    .logo-brand {
+      display: flex;
+      align-items: center;
+    }
+
+    .logo-brand img {
+      margin-right: 5px;
+    }
+
+    .logo-brand span {
+      font-weight: bold;
+    }
+
+    .navbar-nav li.nav-item:last-child {
+      margin-left: 10px;
+    }
+
+    .header {
+        padding: 30px;
+        font-size: 40px;
+        text-align: center;
+        background: transparent;
+    }
+
+  </style>
+
+</head>
+<body>
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgb(0, 0, 0);">
+    <div class="container">
+      <a class="navbar-brand logo-brand" href="/">
+        <img src="PoweredBy_200_Horizontal_Light-Backgrounds_With_Logo.gif" alt="Logo" class="d-inline-block align-top">
+        GIFHUB
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+        </ul>
+      </div>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/logout">
+              Logout
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link center" href="/user">
+              <img src="user.png" alt="User" width="30px" height="30px" class="d-inline-block align-top">
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+
+  <div class="image-container">
+    <img class="image" src="<%= gifUrl %>">
+    <div class="image-info">
+      <div class="tags">
+        <% tags.forEach(function(tag) { %>
+          <span class="tag"><%= tag %></span>
+        <% }) %>
+      </div>
+        <% if (isFavorited) { %>
+              <button class="favorite-button">
+                <img src="heart7.png" alt="Dislike">
+              </button>
+        <% } else { %>
+            <button class="favorite-button">
+            <img src="heart (4).png" alt="Like">
+            </button>
+        <% } %>
+    </div>
+  </div>
+  
+  <div class="gallery-navigation">
+    <% if (prevUrl) { %>
+      <a href="/prev?url=<%= encodeURIComponent(gifUrl) %>">Previous</a>
+    <% } %>
+    <% if (nextUrl) { %>
+      <a href="/next?url=<%= encodeURIComponent(gifUrl) %>">Next</a>
+    <% } %>
+  </div>
+  
+  
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script>
+
+
+
+    document.addEventListener('DOMContentLoaded', function() {
+      var favoriteButtons = document.querySelectorAll('.favorite-button');
+      favoriteButtons.forEach(function(button) {
+        button.addEventListener('click', function(event) {
+          var imageContainer = event.target.closest('.image-container');
+          var image = imageContainer.querySelector('.image');
+          if (image) {
+            var imageUrl = image.src;
+            var isHeart7 = event.target.src.includes('heart7.png');
+            if (isHeart7) {
+              event.target.src = 'heart (4).png';
+              deleteFromFavorites(imageUrl);
+            } else {
+              event.target.src = 'heart7.png';
+              addToFavorites(imageUrl);
+            }
+          }
+        });
+      });
+    
+      function addToFavorites(imageUrl) {
+        fetch('/favorite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ gifUrl: imageUrl })
+        })
+          .then(response => response.json())
+          .then(data => console.log(data.message))
+          .catch(error => console.error('Error adding GIF to favorites:', error));
+      }
+    
+      function deleteFromFavorites(imageUrl) {
+        fetch('/unfavorite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ gifUrl: imageUrl })
+        })
+          .then(response => response.json())
+          .then(data => console.log(data.message))
+          .catch(error => console.error('Error removing GIF from favorites:', error));
+      }
+    });
+    
+    
+      </script>
+
+</body>
+</html>

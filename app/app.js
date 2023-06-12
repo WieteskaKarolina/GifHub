@@ -44,7 +44,7 @@ const checkAuthentication = (req, res, next) => {
   }
 };
 
-
+const imageUrls = []; // Moved to shared scope
 
 app.get('/', checkAuthentication, async (req, res) => {
   const page = req.query.page || 1;
@@ -55,20 +55,77 @@ app.get('/', checkAuthentication, async (req, res) => {
     const response = await fetch(`https://api.giphy.com/v1/gifs/trending?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&limit=${limit}&offset=${offset}&rating=g&lang=en`);
     const data = await response.json();
 
-    const imageUrls = [];
     data.data.forEach(gif => {
       imageUrls.push(gif.images.fixed_height.url);
     });
 
     const userId = req.session.user.user_id;
     const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
-    console.log(favoritedGifs);
+    //console.log(favoritedGifs);
     res.render('index', { imageUrls, favoritedGifs, user: req.session.user });
   } catch (error) {
     console.log('Error:', error);
     res.status(500).send('Internal Server Error');
   }
 });
+
+app.get('/gif', async (req, res) => {
+  const gifUrl = req.query.url;
+
+  try {
+    const gifResponse = await fetch(`https://api.giphy.com/v1/gifs/translate?api_key=LTseqPTtX3lsCg7ZBGXDISq76fMIGVHJ&s=${gifUrl}`);
+    const gifData = await gifResponse.json();
+
+    const title = gifData.data.title;
+    const tags = title.split(' ');
+
+    const userId = req.session.user.user_id;
+    const favoritedGif = await db.oneOrNone(
+      'SELECT gif_url FROM favorites ' +
+      'INNER JOIN gifs ON favorites.gif_id = gifs.gif_id ' +
+      'WHERE favorites.user_id = $1 AND gifs.gif_url = $2',
+      [userId, gifUrl]
+    );
+
+    const isFavorited = favoritedGif !== null;
+
+    res.render('gif', { gifUrl, tags, isFavorited, prevUrl: '/prev', nextUrl: '/next' });
+  } catch (error) {
+    console.error('Error fetching GIF details:', error);
+    res.status(500).send('Error fetching GIF details');
+  }
+});
+
+app.get('/prev', (req, res) => {
+  const gifUrl = decodeURIComponent(req.query.url); 
+  const currentIndex = imageUrls.findIndex(url => url === gifUrl);
+  const prevIndex = currentIndex - 1;
+ 
+  if (prevIndex >= 0 && prevIndex < imageUrls.length) {
+    const prevUrl = imageUrls[prevIndex];
+    res.redirect(`/gif?url=${encodeURIComponent(prevUrl)}`);
+  } else {
+    res.redirect(`/gif?url=${encodeURIComponent(gifUrl)}`);
+  }
+});
+
+app.get('/next', (req, res) => {
+  const gifUrl = decodeURIComponent(req.query.url); // Decode the URL
+  console.log("url:", gifUrl)
+  console.log(imageUrls)
+  const currentIndex = imageUrls.findIndex(url => url === gifUrl);
+  const nextIndex = currentIndex + 1;
+  console.log(currentIndex)
+
+  if (nextIndex >= 0 && nextIndex < imageUrls.length) {
+    const nextUrl = imageUrls[nextIndex];
+    res.redirect(`/gif?url=${encodeURIComponent(nextUrl)}`);
+  } else {
+    res.redirect(`/gif?url=${encodeURIComponent(gifUrl)}`);
+  }
+});
+
+
 
 
 app.post('/favorite', (req, res) => {
@@ -97,8 +154,6 @@ app.post('/favorite', (req, res) => {
     }
   });
 });
-
-
 
   app.post('/unfavorite', (req, res) => {
     const gifUrl = req.body.gifUrl;
