@@ -213,9 +213,6 @@ app.get('/recommendations', async (req, res) => {
   }
 });
 
-app.listen(3000, () => {
-  console.log('Serwer Node.js nasłuchuje na porcie 3000...');
-});
 
 app.post('/unfavorite', async (req, res) => {
   const gifUrl = req.body.gifUrl;
