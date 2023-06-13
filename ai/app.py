@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 import psycopg2
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.metrics.pairwise import cosine_similarity
+import requests
 
 app = Flask(__name__)
 
@@ -17,35 +16,47 @@ cur = conn.cursor()
 
 @app.route('/recommendations', methods=['GET'])
 def get_recommendations():
-    tags = request.args.get('tags')
+    user_id = request.args.get('user_id')
     top_n = int(request.args.get('top_n', 5))
 
-    recommendations = recommend_similar_gifs(tags, top_n)
-    return jsonify({'recommendations': recommendations})
+    recommendations = recommend_similar_gifs(user_id, top_n)
+    return jsonify({'image_urls': recommendations})
 
-def recommend_similar_gifs(tags, top_n=5):
-    cur.execute("SELECT * FROM gifs")
+def recommend_similar_gifs(user_id, top_n=5):
+    cur.execute("SELECT tags.tag_name FROM tags JOIN gif_tags ON tags.tag_id = gif_tags.tag_id JOIN gifs ON gif_tags.gif_id = gifs.gif_id WHERE gifs.user_id = %s", (user_id,))
     rows = cur.fetchall()
 
-    data = []
+    liked_tags = [row[0] for row in rows]
 
-    for row in rows:
-        input_data = preprocess_data(row)
-        data.append(input_data)
+    try:
+        response = requests.get("https://api.giphy.com/v1/gifs/search", params={
+            "api_key": "2HwtozSNXN1n7iOTOxjiOPC7drs5HadF",
+            "limit": "100",
+            "rating": "g",
+            "lang": "en",
+            "q": "+".join(liked_tags)
+        })
 
-    vectorizer = TfidfVectorizer()
-    tfidf_matrix = vectorizer.fit_transform(data['tags'])
+        if response.status_code == 200:
+            gif_data = response.json().get("data", [])
+            gif_urls = [gif.get("images", {}).get("fixed_height", {}).get("url") for gif in gif_data]
 
-    similarity_matrix = cosine_similarity(tfidf_matrix)
+            return gif_urls
 
-    input_vector = vectorizer.transform([tags])
+    except requests.exceptions.RequestException as e:
+        print("Error occurred during API request:", e)
 
-    sim_scores = list(enumerate(cosine_similarity(input_vector, tfidf_matrix)[0]))
-    sim_scores = sorted(sim_scores, key=lambda x: x[1], reverse=True)
+    return []
 
-    recommended_gifs = [data.iloc[sim[0]]['gif_id'] for sim in sim_scores][:top_n]
+@app.route('/tags', methods=['GET'])
+def get_tags():
+    cur.execute("SELECT tag_name FROM tags")
+    rows = cur.fetchall()
 
-    return recommended_gifs
+    tags = [row[0] for row in rows]
+
+    return jsonify({'tags': tags})
+
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

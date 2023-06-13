@@ -2,19 +2,142 @@
 <html>
 <head>
   <title>GIF Recommendations</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <link rel="icon" href="heart (4).png" type="image/png">
+  <style>
+    body {
+      background: linear-gradient(to bottom, #f3f2f2, #ec76cd, #000000);
+      margin: 0;
+      padding: 0;
+    }
+    .image-container {
+      margin-bottom: 5px;
+      background-color: rgb(14, 13, 13);
+      padding-left: 15px;
+      padding-right: 15px;
+      padding-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .image {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+    }
+    .favorite-button {
+      border: none;
+      background: none;
+      padding: 0;
+      cursor: pointer;
+      padding: 10px;
+    }
+    .row {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      grid-gap: 10px;
+      margin: 0;
+    }
+  </style>
 </head>
 <body>
-  <h1>GIF Recommendations</h1>
+  <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: rgb(0, 0, 0);">
+    <div class="container">
+      <a class="navbar-brand" href="/">
+        <img src="PoweredBy_200_Horizontal_Light-Backgrounds_With_Logo.gif" alt="Logo" class="d-inline-block align-top">
+        GIFHUB
+      </a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav ml-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/logout">
+              Logout
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/user">
+              <img src="user.png" alt="User" width="30px" height="30px" class="d-inline-block align-top">
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
 
-  <% if (recommendations.length > 0) { %>
-    <h2>Recommended GIFs:</h2>
-    <ul>
-      <% recommendations.forEach(function(gif) { %>
-        <li><%= gif.title %></li>
-      <% }); %>
-    </ul>
-  <% } else { %>
-    <p>No recommendations found.</p>
-  <% } %>
+  <div class="container">
+    <div class="row">
+      <% recommendations.forEach(function(url) { %>
+        <div class="image-container">
+          <a href="/gif?url=<%= encodeURIComponent(url) %>" target="_blank">
+            <img class="image" src="<%= url %>">
+          </a>
+          <% if (favoritedGifs.find(gif => gif.gif_url === url)) { %>
+            <button class="favorite-button">
+              <img src="heart7.png" alt="Dislike">
+            </button>
+          <% } else { %>
+            <button class="favorite-button">
+              <img src="heart (4).png" alt="Like">
+            </button>
+          <% } %>
+        </div>
+      <% }) %>        
+    </div>
+  </div>
+
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.4/dist/umd/popper.min.js"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      var favoriteButtons = document.querySelectorAll('.favorite-button');
+      favoriteButtons.forEach(function(button) {
+        button.addEventListener('click', function(event) {
+          var imageContainer = event.target.closest('.image-container');
+          var image = imageContainer.querySelector('.image');
+          if (image) {
+            var imageUrl = image.src;
+            var isHeart7 = event.target.src.includes('heart7.png');
+            if (isHeart7) {
+              event.target.src = 'heart (4).png';
+              deleteFromFavorites(imageUrl);
+            } else {
+              event.target.src = 'heart7.png';
+              addToFavorites(imageUrl);
+            }
+          }
+        });
+      });
+
+      function addToFavorites(imageUrl) {
+        fetch('/favorite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ gifUrl: imageUrl })
+        })
+          .then(response => response.json())
+          .then(data => console.log(data.message))
+          .catch(error => console.error('Error adding GIF to favorites:', error));
+      }
+
+      function deleteFromFavorites(imageUrl) {
+        fetch('/unfavorite', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ gifUrl: imageUrl })
+        })
+          .then(response => response.json())
+          .then(data => console.log(data.message))
+          .catch(error => console.error('Error removing GIF from favorites:', error));
+      }
+    });
+  </script>
 </body>
-</html>
+</html> 

@@ -10,6 +10,7 @@ const loginOrRegisterRoute = require(__dirname + '/routes/loginOrRegister');
 const signUpRoute = require(__dirname + '/routes/signUp');
 const routerLogout = require('./routes/logout');
 const bodyParser = require('body-parser');
+const axios = require('axios');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -39,12 +40,11 @@ const checkAuthentication = (req, res, next) => {
   if (req.session && req.session.user) {
     next();
   } else {
-    // Redirect or render login page
     res.redirect('/loginOrRegister');
   }
 };
 
-let imageUrls = []; // Moved to shared scope
+let imageUrls = []; 
 
 app.get('/', checkAuthentication, async (req, res) => {
   const page = req.query.page || 1;
@@ -61,7 +61,6 @@ app.get('/', checkAuthentication, async (req, res) => {
 
     const userId = req.session.user.user_id;
     const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
-    //console.log(favoritedGifs);
     res.render('index', { imageUrls, favoritedGifs, user: req.session.user });
   } catch (error) {
     console.log('Error:', error);
@@ -78,11 +77,27 @@ app.get('/search', checkAuthentication, async (req, res) => {
   try {
     const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&q=${query}&limit=${limit}&offset=${offset}&rating=g&lang=en`);
     const data = await response.json();
-    imageUrls = []
-    imageUrls = data.data.map(gif => gif.images.fixed_height.url);
+    const imageUrls = data.data.map(gif => gif.images.fixed_height.url);
 
     const userId = req.session.user.user_id;
     const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
+
+    const tagsResponse = await fetch(`https://api.giphy.com/v1/tags/related/${query}?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF`);
+    const tagsData = await tagsResponse.json();
+    const tags = tagsData.data.map(tag => tag.name);
+
+    const recommendations = [...tags, query];
+
+    for (const tag of recommendations) {
+      const existingTag = await db.oneOrNone('SELECT tag_id FROM tags WHERE tag_name = $1', tag);
+
+      if (existingTag) {
+        await db.none('INSERT INTO recommendations_by_searching (user_id, tag_id) VALUES ($1, $2)', [userId, existingTag.tag_id]);
+      } else {
+        const newTag = await db.one('INSERT INTO tags (tag_name) VALUES ($1) RETURNING tag_id', tag);
+        await db.none('INSERT INTO recommendations_by_searching (user_id, tag_id) VALUES ($1, $2)', [userId, newTag.tag_id]);
+      }
+    }
 
     res.render('index', { imageUrls, favoritedGifs, user: req.session.user });
   } catch (error) {
@@ -92,7 +107,7 @@ app.get('/search', checkAuthentication, async (req, res) => {
 });
 
 
-app.get('/gif', async (req, res) => {
+app.get('/gif', checkAuthentication,  async (req, res) => {
   const gifUrl = req.query.url;
 
   try {
@@ -119,7 +134,7 @@ app.get('/gif', async (req, res) => {
   }
 });
 
-app.get('/prev', (req, res) => {
+app.get('/prev',  (req, res) => {
   const gifUrl = decodeURIComponent(req.query.url); 
   const currentIndex = imageUrls.findIndex(url => url === gifUrl);
   const prevIndex = currentIndex - 1;
@@ -132,7 +147,7 @@ app.get('/prev', (req, res) => {
   }
 });
 
-app.get('/next', (req, res) => {
+app.get('/next',  (req, res) => {
   const gifUrl = decodeURIComponent(req.query.url);  
   console.log("url:", gifUrl)
   console.log(imageUrls)
@@ -194,19 +209,19 @@ app.post('/favorite', async (req, res) => {
 });
 
 
+const pythonServerURL = 'http://ai:5000';
+
 app.get('/recommendations', async (req, res) => {
-  const tags = req.query.tags;
+  const userId = req.session.user.user_id;
 
   try {
-    // Wyślij zapytanie do serwera Pythona
-    const response = await axios.get(`${pythonServerURL}/recommendations`, {
-      params: { tags },
+    const recommendationResponse = await axios.get(`${pythonServerURL}/recommendations`, {
+      params: { user_id: userId },
     });
 
-    const recommendations = response.data.recommendations;
-    
-    // Renderuj stronę z rekomendacjami GIF-ów
-    res.render('recommendations', { recommendations: recommendations });
+    const recommendations = recommendationResponse.data.image_urls;
+    const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
+    res.render('recommendations', { recommendations , favoritedGifs, user: req.session.user });
   } catch (error) {
     console.error('Błąd podczas pobierania rekomendacji GIF-ów:', error);
     res.status(500).send('Wystąpił błąd podczas pobierania rekomendacji GIF-ów.');
@@ -214,7 +229,7 @@ app.get('/recommendations', async (req, res) => {
 });
 
 
-app.post('/unfavorite', async (req, res) => {
+app.post('/unfavorite',  async (req, res) => {
   const gifUrl = req.body.gifUrl;
   const userId = req.session.user.user_id;
 
@@ -242,7 +257,7 @@ app.post('/unfavorite', async (req, res) => {
   
 
 
-  app.get('/user', checkAuthentication, async (req, res) => {
+app.get('/user', checkAuthentication, async (req, res) => {
     const userId = req.session.user.user_id;
   
     try {
