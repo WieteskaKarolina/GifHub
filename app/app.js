@@ -221,13 +221,26 @@ app.get('/recommendations', async (req, res) => {
 
     const recommendations = recommendationResponse.data.image_urls;
     const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
+    imageUrls = [];
+    imageUrls = recommendations;
     res.render('recommendations', { recommendations , favoritedGifs, user: req.session.user });
+    //res.status(200).json({ recommendations });
   } catch (error) {
     console.error('Błąd podczas pobierania rekomendacji GIF-ów:', error);
     res.status(500).send('Wystąpił błąd podczas pobierania rekomendacji GIF-ów.');
   }
 });
 
+app.get('/tags', async (req, res) => {
+  try {
+    const response = await axios.get(`${pythonServerURL}/tags`);
+    const tags = response.data.tags;
+    res.status(200).json({ tags });
+  } catch (error) {
+    console.error('Błąd podczas pobierania tagów:', error);
+    res.status(500).send('Wystąpił błąd podczas pobierania tagów.');
+  }
+});
 
 app.post('/unfavorite',  async (req, res) => {
   const gifUrl = req.body.gifUrl;

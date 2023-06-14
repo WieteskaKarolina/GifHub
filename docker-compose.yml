@@ -27,6 +27,8 @@ services:
   ai:
     build:
       context: ./ai
+    ports:
+      - 5000:5000
     depends_on:
       - db
     networks:
