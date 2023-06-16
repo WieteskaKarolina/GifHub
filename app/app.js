@@ -87,7 +87,7 @@ app.get('/search', checkAuthentication, async (req, res) => {
     const tags = tagsData.data.map(tag => tag.name);
 
     const recommendations = [...tags, query];
-
+    console.log("-->tags: ", recommendations)
     for (const tag of recommendations) {
       const existingTag = await db.oneOrNone('SELECT tag_id FROM tags WHERE tag_name = $1', tag);
 
@@ -98,7 +98,7 @@ app.get('/search', checkAuthentication, async (req, res) => {
         await db.none('INSERT INTO recommendations_by_searching (user_id, tag_id) VALUES ($1, $2)', [userId, newTag.tag_id]);
       }
     }
-
+    
     res.render('index', { imageUrls, favoritedGifs, user: req.session.user });
   } catch (error) {
     console.log('Error:', error);

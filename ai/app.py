@@ -1,6 +1,8 @@
 from flask import Flask, request, jsonify
 import psycopg2
 import requests
+from transformers import BertTokenizer, BertModel
+import torch
 
 app = Flask(__name__)
 
@@ -13,6 +15,10 @@ conn = psycopg2.connect(
 )
 
 cur = conn.cursor()
+
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+model = BertModel.from_pretrained('bert-base-uncased')
+
 
 @app.route('/recommendations', methods=['GET'])
 def get_recommendations():
@@ -29,14 +35,34 @@ def recommend_similar_gifs(user_id, top_n=5):
     rows = cur.fetchall()
 
     liked_tags = [row[0] for row in rows]
-    liked_tags = liked_tags[:5]
+
+    # Fetch tags from recommendations_by_searching
+    cur.execute(
+        "SELECT tags.tag_name FROM tags JOIN recommendations_by_searching ON tags.tag_id = recommendations_by_searching.tag_id WHERE recommendations_by_searching.user_id = %s",
+        (user_id,))
+    recommendation_rows = cur.fetchall()
+
+    # Add tag names from recommendations_by_searching to liked_tags
+    liked_tags.extend([row[0] for row in recommendation_rows])
+
+    # Remove repetitions from liked_tags
+    liked_tags = list(set(liked_tags))
+
+    print(liked_tags)
+
+    scored_tags = score_tags(liked_tags)
+    sorted_tags = [tag for tag, _ in scored_tags]
+    sorted_tags = sorted_tags[:top_n]
+
+    print(sorted_tags)
+
     try:
         response = requests.get("https://api.giphy.com/v1/gifs/search", params={
             "api_key": "2HwtozSNXN1n7iOTOxjiOPC7drs5HadF",
             "limit": "100",
             "rating": "g",
             "lang": "en",
-            "q": "+".join(liked_tags)
+            "q": "+".join(sorted_tags)
         })
         if response.status_code == 200:
             gif_data = response.json().get("data", [])
@@ -49,13 +75,22 @@ def recommend_similar_gifs(user_id, top_n=5):
 
     return []
 
+def score_tags(tags):
+    inputs = tokenizer(tags, padding=True, truncation=True, return_tensors="pt")
+    outputs = model(**inputs)
+    scores = torch.mean(outputs.last_hidden_state, dim=1)
+    print("Shape of inputs:", inputs.input_ids.shape)
+    print("Shape of outputs:", outputs.last_hidden_state.shape)
+    print("Shape of scores:", scores.shape)
+    tag_scores = [(tag, score.tolist()) for tag, score in zip(tags, scores)]
+    sorted_tags = sorted(tag_scores, key=lambda x: x[1], reverse=True)
+    return sorted_tags
+
 @app.route('/tags', methods=['GET'])
 def get_tags():
     cur.execute("SELECT tag_name FROM tags")
     rows = cur.fetchall()
-
     tags = [row[0] for row in rows]
-
     return jsonify({'tags': tags})
 
 
