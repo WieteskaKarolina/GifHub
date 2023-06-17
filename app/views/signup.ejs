@@ -141,6 +141,9 @@
         <div class="mb-3">
           <label for="register-confirm-password" class="form-label">Confirm Password:</label>
           <input type="password" id="register-confirm-password" name="confirmPassword" class="form-control" required>
+          <% if (passwordMismatch) { %>
+            <div class="text-danger">Passwords do not match</div>
+          <% } %>
         </div>
         <div class="text-center">
           <button type="submit" class="btn btn-signup">Sign Up</button>
@@ -148,8 +151,12 @@
         <div class="form-link">
           Already have an account? <a href="/loginOrRegister">Login</a>
         </div>
+        <div id="error-message" class="text-center text-danger">
+          <% if (errorMessage) { %>
+            <%= errorMessage %>
+          <% } %>
+        </div>
       </form>
-    
     </div>
   </div>
 

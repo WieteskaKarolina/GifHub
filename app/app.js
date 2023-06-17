@@ -77,7 +77,15 @@ app.get('/search', checkAuthentication, async (req, res) => {
   try {
     const response = await fetch(`https://api.giphy.com/v1/gifs/search?api_key=2HwtozSNXN1n7iOTOxjiOPC7drs5HadF&q=${query}&limit=${limit}&offset=${offset}&rating=g&lang=en`);
     const data = await response.json();
-    const imageUrls = data.data.map(gif => gif.images.fixed_height.url);
+    imageUrls = []
+    data.data.forEach(gif => {
+      imageUrls.push(gif.images.fixed_height.url);
+    });
+
+
+    if(imageUrls.length === 0){
+      res.render('exploreMore', {username: req.session.user.username });
+    }
 
     const userId = req.session.user.user_id;
     const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
@@ -221,13 +229,19 @@ app.get('/recommendations', async (req, res) => {
 
     const recommendations = recommendationResponse.data.image_urls;
     const favoritedGifs = await db.manyOrNone('SELECT gif_url FROM favorites INNER JOIN gifs ON favorites.gif_id = gifs.gif_id WHERE favorites.user_id = $1', userId);
-    imageUrls = [];
-    imageUrls = recommendations;
-    res.render('recommendations', { recommendations , favoritedGifs, user: req.session.user });
-    //res.status(200).json({ recommendations });
+    imageUrls = []
+    recommendations.forEach(gif => {
+      imageUrls.push(gif);
+    });
+
+    
+    if(imageUrls.length === 0){
+      res.render('exploreMore', {username: req.session.user.username });
+    }
+    res.render('recommendations', { imageUrls , favoritedGifs, user: req.session.user });
   } catch (error) {
     console.error('Błąd podczas pobierania rekomendacji GIF-ów:', error);
-    res.status(500).send('Wystąpił błąd podczas pobierania rekomendacji GIF-ów.');
+    res.render('exploreMore', {username: req.session.user.username });
   }
 });
 
